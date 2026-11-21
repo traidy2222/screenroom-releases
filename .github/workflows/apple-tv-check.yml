@@ -1,0 +1,26 @@
+name: Apple TV public client check
+on:
+  push:
+    branches: [codex/tv-platform-ports]
+    paths: ['apple-tv/**', '.github/workflows/apple-tv-check.yml']
+permissions:
+  contents: read
+jobs:
+  compile:
+    if: github.event.repository.private == false
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Apple TV simulator client
+        run: xcodebuild -project apple-tv/ScreenroomTV.xcodeproj -scheme ScreenroomTV -sdk appletvsimulator -configuration Debug -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Compile Apple TV device client without signing
+        run: xcodebuild -project apple-tv/ScreenroomTV.xcodeproj -scheme ScreenroomTV -sdk appletvos -configuration Release -derivedDataPath device-build CODE_SIGNING_ALLOWED=NO build
+      - name: Save compile results
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenroom-apple-tv-unsigned-builds
+          path: |
+            build/Build/Products/Debug-appletvsimulator/ScreenroomTV.app
+            device-build/Build/Products/Release-appletvos/ScreenroomTV.app
+          retention-days: 2
